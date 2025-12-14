@@ -1,10 +1,6 @@
-import { getLogger } from '@jitsi/logger';
-
 import browser from '../../modules/browser';
 
 import { CodecMimeType } from './CodecMimeType';
-
-const logger = getLogger('rtc:StandardVideoQualitySettings');
 
 // Default value for assumed downlink bandwidth for the local endpoint which tells the bridge to use its own calculated
 // BWE value while determining the number of video streams to route to the endpoint.
@@ -295,10 +291,10 @@ export function getEffectiveSimulcastLayers(
     // If forceNumLayers is specified, use it (with bounds checking)
     if (typeof options.forceNumLayers === 'number') {
         numLayers = Math.max(1, Math.min(3, Math.floor(options.forceNumLayers)));
-        
+
         if (numLayers !== options.forceNumLayers) {
-            logger.warn(
-                `forceNumLayers=${options.forceNumLayers} out of range. ` +
+            console.warn(
+                `[StandardVideoQualitySettings] forceNumLayers=${options.forceNumLayers} out of range. ` +
                 `Clamped to ${numLayers}.`
             );
         }
@@ -311,19 +307,19 @@ export function getEffectiveSimulcastLayers(
         } else {
             numLayers = 3;
         }
-        
+
         // Apply browser-specific heuristics if enabled
         if (config.enableBrowserHeuristics !== false && options.browser) {
             const browserName = options.browser.name.toLowerCase();
-            
+
             // Chromium-based browsers may collapse simulcast layers at low resolutions
             // Log this for observability
             if ((browserName.includes('chrome') || browserName.includes('chromium') || browserName.includes('edge'))
                 && options.codec === 'vp8'
                 && captureHeight < 640
                 && numLayers > 1) {
-                logger.info(
-                    `Chromium + VP8 + low resolution (${captureHeight}p). ` +
+                console.info(
+                    `[StandardVideoQualitySettings] Chromium + VP8 + low resolution (${captureHeight}p). ` +
                     `Keeping ${numLayers} layers but Chromium may collapse to fewer at runtime.`
                 );
             }
@@ -332,15 +328,15 @@ export function getEffectiveSimulcastLayers(
     
     // Return the first N layers from SIM_LAYERS in canonical order (lowest to highest quality)
     const effectiveLayers = SIM_LAYERS.slice(0, numLayers);
-    
+
     // Log layer reduction for debugging
     if (numLayers < 3) {
-        logger.debug(
-            `getEffectiveSimulcastLayers: ` +
+        console.debug(
+            `[StandardVideoQualitySettings] getEffectiveSimulcastLayers: ` +
             `captureHeight=${captureHeight}, numLayers=${numLayers}, ` +
             `codec=${options.codec || 'unknown'}, forceNumLayers=${options.forceNumLayers}`
         );
     }
-    
+
     return effectiveLayers;
 }
