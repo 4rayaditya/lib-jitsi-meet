@@ -25,16 +25,12 @@ const logger = getLogger('rtc:TPCUtils');
 const VIDEO_CODECS = [CodecMimeType.AV1, CodecMimeType.H264, CodecMimeType.VP8, CodecMimeType.VP9];
 
 /**
- * Maximum number of simulcast layers supported by the protocol.
- * Used for SIM group sizing and legacy array sizing for backward compatibility.
+ * Maximum number of simulcast layers supported by the WebRTC protocol.
+ * This constant is kept for backward compatibility documentation purposes.
+ * The actual number of layers (1, 2, or 3) is now determined dynamically
+ * based on capture resolution via getEffectiveSimulcastLayers().
  */
 const MAX_SIMULCAST_LAYERS = 3;
-
-/**
- * Number of SSRCs grouped together in a SIM group.
- * Per WebRTC protocol, each SIM group contains up to MAX_SIMULCAST_LAYERS primary SSRCs.
- */
-const SIM_GROUP_SIZE = MAX_SIMULCAST_LAYERS;
 
 /**
  * Gets the default reference height for simulcast configuration.
@@ -301,30 +297,24 @@ export class TPCUtils {
             }];
         }
 
-        // 2. Map bitrate tiers: getEffectiveSimulcastLayers returns layers in canonical order [low→high quality]
-        // Index 0 = lowest quality (scaleFactor 4), gets low bitrate
-        // Index 1 = medium quality (scaleFactor 2), gets standard bitrate  
-        // Index 2 = highest quality (scaleFactor 1), gets high/ssHigh bitrate
-        const bitrateForIndex = (idx: number): number => {
-            if (idx === numLayers - 1) {
-                // Highest quality layer gets ssHigh for screenshare, high for camera
+        // 2. Map bitrate tiers based on scale factor
+        const bitrateForLayer = (layer: { scaleFactor: number }): number => {
+            if (layer.scaleFactor === 1.0) {
                 return videoType === VideoType.DESKTOP ? codecBitrates.ssHigh : codecBitrates.high;
             }
-            if (idx === 0) {
-                // Lowest quality layer gets low bitrate
+            if (layer.scaleFactor === 4.0) {
                 return codecBitrates.low;
             }
-            // Middle layers get standard bitrate
             return codecBitrates.standard;
         };
 
         logger.debug(`TPCUtils._getVideoStreamEncodings: codec=${codecKey}, captureRes=${captureResolution}px, ` +
             `numLayers=${numLayers}, scaleFactors=[${effectiveLayers.map(l => l.scaleFactor).join(',')}]`);
 
-        // 3. Build encodings array from canonical layers (already in correct order)
-        const simulcastEncodings: IRTCRtpEncodingParameters[] = effectiveLayers.map((layer, idx) => ({
+        // 3. Build encodings array from canonical layers
+        const simulcastEncodings: IRTCRtpEncodingParameters[] = effectiveLayers.map(layer => ({
             active: this.pc.videoTransferActive,
-            maxBitrate: bitrateForIndex(idx),
+            maxBitrate: bitrateForLayer(layer),
             rid: layer.rid,
             scaleResolutionDownBy: layer.scaleFactor
         }));
@@ -344,7 +334,7 @@ export class TPCUtils {
             // Use the configuration of the highest quality layer available.
             const topLayerIndex = effectiveLayers.length - 1;
             const topLayer = effectiveLayers[topLayerIndex];
-            const topLayerBitrate = bitrateForIndex(topLayerIndex);
+            const topLayerBitrate = bitrateForLayer(topLayer);
 
             // For SVC, we send one stream at native resolution with spatial scalability.
             // 
@@ -778,13 +768,14 @@ export class TPCUtils {
                 return desc;
             }
 
-            // Add a SIM group for every SIM_GROUP_SIZE FID groups (per WebRTC simulcast protocol).
-            for (let i = 0; i < ssrcs.length; i += SIM_GROUP_SIZE) {
-                const simSsrcs = ssrcs.slice(i, i + SIM_GROUP_SIZE);
-
+            // Only add SIM group if we have more than one SSRC (simulcast is actually enabled).
+            // For single-layer tracks (low resolution), no SIM group should be created.
+            if (ssrcs.length > 1) {
+                // Add a SIM group. Note: With dynamic layers, ssrcs.length can be 1, 2, or 3.
+                // Create one SIM group containing all the simulcast SSRCs.
                 video.ssrcGroups.push({
                     semantics: SSRC_GROUP_SEMANTICS.SIM,
-                    ssrcs: simSsrcs.join(' ')
+                    ssrcs: ssrcs.join(' ')
                 });
             }
         }

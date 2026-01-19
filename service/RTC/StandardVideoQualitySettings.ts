@@ -326,8 +326,11 @@ export function getEffectiveSimulcastLayers(
         }
     }
     
-    // Return the first N layers from SIM_LAYERS in canonical order (lowest to highest quality)
-    const effectiveLayers = SIM_LAYERS.slice(0, numLayers);
+    // Return the last N layers from SIM_LAYERS (highest quality layers)
+    // SIM_LAYERS are ordered {rid: '1', scale: 4.0} (low), {rid: '2', scale: 2.0} (mid), {rid: '3', scale: 1.0} (high)
+    // If numLayers=1, we want [{rid: '3', scale: 1.0}] (High)
+    // If numLayers=2, we want [{rid: '2', scale: 2.0}, {rid: '3', scale: 1.0}] (Mid, High)
+    const effectiveLayers = SIM_LAYERS.slice(SIM_LAYERS.length - numLayers);
 
     // Log layer reduction for debugging
     if (numLayers < 3) {
