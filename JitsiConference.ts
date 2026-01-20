@@ -1058,6 +1058,10 @@ export default class JitsiConference extends Listenable {
         if (!this.jvbJingleSession
                 && this.getParticipantCount() >= 2
                 && !this._sessionInitiateTimeout) {
+            // Clear any existing timeout before setting a new one to prevent memory leak
+            if (this._sessionInitiateTimeout) {
+                window.clearTimeout(this._sessionInitiateTimeout);
+            }
             this._sessionInitiateTimeout = window.setTimeout(() => {
                 this._sessionInitiateTimeout = null;
                 Statistics.sendAnalytics(createJingleEvent(
@@ -1078,7 +1082,7 @@ export default class JitsiConference extends Listenable {
     private _maybeClearDeferredStartP2P(): void {
         if (this.deferredStartP2PTask) {
             logger.info('Cleared deferred start P2P task');
-            clearTimeout(this.deferredStartP2PTask);
+            window.clearTimeout(this.deferredStartP2PTask);
             this.deferredStartP2PTask = null;
         }
     }
@@ -1311,9 +1315,10 @@ export default class JitsiConference extends Listenable {
                         return;
                     }
                     logger.info(`Will start P2P with: ${jid} after ${this.backToP2PDelay} seconds...`);
-                    this.deferredStartP2PTask = Number(setTimeout(
+                    // Store timer ID to ensure proper cleanup
+                    this.deferredStartP2PTask = window.setTimeout(
                         this._startP2PSession.bind(this, jid),
-                        this.backToP2PDelay * 1000));
+                        this.backToP2PDelay * 1000);
                 } else {
                     logger.info(`Will start P2P with: ${jid}`);
                     this._startP2PSession(jid);
@@ -1772,11 +1777,18 @@ export default class JitsiConference extends Listenable {
             // Use an exponential backoff timer for ICE restarts.
             const jitterDelay = getJitterDelay(this._iceRestarts, 1000 /* min. delay */);
 
+            // Clear any existing delayed ICE failed handler to prevent duplicate timers
+            if (this._delayedIceFailed) {
+                this._delayedIceFailed = null;
+            }
+            
             this._delayedIceFailed = new IceFailedHandling(this);
-            setTimeout(() => {
-                logger.error(`triggering ice restart after ${jitterDelay} `);
-                this._delayedIceFailed.start();
-                this._iceRestarts++;
+            window.setTimeout(() => {
+                if (this._delayedIceFailed) {
+                    logger.error(`triggering ice restart after ${jitterDelay} `);
+                    this._delayedIceFailed.start();
+                    this._iceRestarts++;
+                }
             }, jitterDelay);
         } else if (this.jvbJingleSession === session) {
             logger.warn('ICE failed, force reloading the conference after failed attempts to re-establish ICE');
@@ -2488,6 +2500,12 @@ export default class JitsiConference extends Listenable {
         this._delayedIceFailed && this._delayedIceFailed.cancel();
 
         this._maybeClearSITimeout();
+        this._maybeClearDeferredStartP2P();
+        
+        // Clear ICE failure handler timer if pending
+        if (this._delayedIceFailed) {
+            this._delayedIceFailed = null;
+        }
 
         // Close both JVb and P2P JingleSessions
         if (this.jvbJingleSession) {

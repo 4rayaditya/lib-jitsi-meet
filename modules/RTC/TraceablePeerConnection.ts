@@ -2744,6 +2744,23 @@ export default class TraceablePeerConnection {
         this._signalingLayer.off(SignalingEvents.PEER_VIDEO_TYPE_CHANGED, this._peerVideoTypeChanged);
         this.peerconnection.removeEventListener('track', this.onTrack);
 
+        // Clean up all event listeners to prevent memory leaks
+        this.peerconnection.onsignalingstatechange = null;
+        this.peerconnection.oniceconnectionstatechange = null;
+        this.peerconnection.onnegotiationneeded = null;
+        this.peerconnection.onconnectionstatechange = null;
+        this.peerconnection.ondatachannel = null;
+        this.peerconnection.onicecandidate = null;
+        
+        // Clear local event handler references
+        this.onsignalingstatechange = null;
+        this.oniceconnectionstatechange = null;
+        this.onnegotiationneeded = null;
+        this.onconnectionstatechange = null;
+        this.ondatachannel = null;
+        this.onicecandidate = null;
+        this.onTrack = null;
+
         if (FeatureFlags.isSsrcRewritingSupported()) {
             for (const remoteTrack of this.remoteTracksBySsrc.values()) {
                 this._removeRemoteTrack(remoteTrack);
