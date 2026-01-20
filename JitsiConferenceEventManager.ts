@@ -73,7 +73,7 @@ export default class JitsiConferenceEventManager {
 
             if (participant) {
                 participant.setFeatures(features);
-                conference.eventEmitter.emit(JitsiConferenceEvents.PARTCIPANT_FEATURES_CHANGED, participant);
+                conference.eventEmitter.emit(JitsiConferenceEvents.PARTICIPANT_FEATURES_CHANGED, participant);
             }
         });
 

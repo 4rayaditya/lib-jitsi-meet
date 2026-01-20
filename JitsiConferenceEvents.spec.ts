@@ -51,7 +51,7 @@ describe( "/JitsiConferenceEvents members", () => {
         expect( JitsiConferenceEvents.NOISY_MIC ).toBe( 'conference.noisy_mic' );
         expect( JitsiConferenceEvents.NON_PARTICIPANT_MESSAGE_RECEIVED ).toBe( 'conference.non_participant_message_received' );
         expect( JitsiConferenceEvents.PRIVATE_MESSAGE_RECEIVED ).toBe( 'conference.privateMessageReceived' );
-        expect( JitsiConferenceEvents.PARTCIPANT_FEATURES_CHANGED ).toBe( 'conference.partcipant_features_changed' );
+        expect( JitsiConferenceEvents.PARTICIPANT_FEATURES_CHANGED ).toBe( 'conference.participant_features_changed' );
         expect( JitsiConferenceEvents.PARTICIPANT_PROPERTY_CHANGED ).toBe( 'conference.participant_property_changed' );
         expect( JitsiConferenceEvents.P2P_STATUS ).toBe( 'conference.p2pStatus' );
         expect( JitsiConferenceEvents.PHONE_NUMBER_CHANGED ).toBe( 'conference.phoneNumberChanged' );

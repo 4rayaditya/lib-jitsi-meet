@@ -306,9 +306,8 @@ export enum JitsiConferenceEvents {
 
     /**
      * Indicates that the features of the participant has been changed.
-     * TODO: there is a spelling mistake in this event name and associated constants
      */
-    PARTCIPANT_FEATURES_CHANGED = 'conference.partcipant_features_changed',
+    PARTICIPANT_FEATURES_CHANGED = 'conference.participant_features_changed',
 
     /**
      * Participant was kicked from the conference.
