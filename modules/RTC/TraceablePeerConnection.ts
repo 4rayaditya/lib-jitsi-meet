@@ -231,13 +231,13 @@ export default class TraceablePeerConnection {
      * @constructor
      */
     constructor(
-            rtc: RTC,
-            id: number,
-            signalingLayer: SignalingLayer,
-            pcConfig: RTCConfiguration,
-            constraints: { optional?: any[]; },
-            isP2P: boolean,
-            options: ITPCOptions
+        rtc: RTC,
+        id: number,
+        signalingLayer: SignalingLayer,
+        pcConfig: RTCConfiguration,
+        constraints: { optional?: any[]; },
+        isP2P: boolean,
+        options: ITPCOptions
     ) {
         /**
          * Indicates whether or not this peer connection instance is actively
@@ -613,7 +613,7 @@ export default class TraceablePeerConnection {
     /**
      * Returns a string representation of a SessionDescription object.
      */
-    static dumpSDP = function(description: Optional<Nullable<RTCSessionDescription>>): string {
+    static dumpSDP = function (description: Optional<Nullable<RTCSessionDescription>>): string {
         if (!description?.sdp) {
             return '';
         }
@@ -765,7 +765,7 @@ export default class TraceablePeerConnection {
     private _adjustRemoteMediaDirection(remoteDescription: RTCSessionDescription): RTCSessionDescription {
         const transformer = new SdpTransformWrap(remoteDescription?.sdp);
 
-        [ MediaType.AUDIO, MediaType.VIDEO ].forEach(mediaType => {
+        [MediaType.AUDIO, MediaType.VIDEO].forEach(mediaType => {
             const media = transformer.selectMedia(mediaType);
             const localSources = this.getLocalTracks(mediaType).length;
             const remoteSources = this.getRemoteTracks(null, mediaType).length;
@@ -780,15 +780,15 @@ export default class TraceablePeerConnection {
                 } else if (!remoteSources) {
                     mLine.direction = MediaDirection.RECVONLY;
 
-                // When there are 2 local sources and 1 remote source,
-                // the first m-line should be set to 'sendrecv' while
-                // the second one needs to be set to 'recvonly'.
+                    // When there are 2 local sources and 1 remote source,
+                    // the first m-line should be set to 'sendrecv' while
+                    // the second one needs to be set to 'recvonly'.
                 } else if (localSources > remoteSources) {
                     mLine.direction = idx ? MediaDirection.RECVONLY : MediaDirection.SENDRECV;
 
-                // When there are 2 remote sources and 1 local source, the first m-line
-                // should be set to 'sendrecv' while
-                // the second one needs to be set to 'sendonly'.
+                    // When there are 2 remote sources and 1 local source, the first m-line
+                    // should be set to 'sendrecv' while
+                    // the second one needs to be set to 'sendonly'.
                 } else {
                     mLine.direction = idx ? MediaDirection.SENDONLY : MediaDirection.SENDRECV;
                 }
@@ -1086,7 +1086,7 @@ export default class TraceablePeerConnection {
                     // eslint-disable-next-line no-param-reassign
                     resultSdp = this.simulcast.mungeLocalDescription(resultSdp, trackResolutionMap);
                     this.trace(`create${logName} OnSuccess::postTransform (simulcast)`,
-                         TraceablePeerConnection.dumpSDP(resultSdp));
+                        TraceablePeerConnection.dumpSDP(resultSdp));
                 }
 
                 if (!this.options.disableRtx && browser.usesSdpMungingForSimulcast()) {
@@ -1098,7 +1098,7 @@ export default class TraceablePeerConnection {
 
                     this.trace(
                         `create${logName}`
-                             + 'OnSuccess::postTransform (rtx modifier)',
+                        + 'OnSuccess::postTransform (rtx modifier)',
                         TraceablePeerConnection.dumpSDP(resultSdp));
                 }
 
@@ -1143,7 +1143,7 @@ export default class TraceablePeerConnection {
                 if (this.isP2P && mediaType === MediaType.VIDEO) {
                     capabilities = capabilities
                         .filter(caps => caps.mimeType.toLowerCase() !== `${MediaType.VIDEO}/${CodecMimeType.ULPFEC}`
-                                && caps.mimeType.toLowerCase() !== `${MediaType.VIDEO}/${CodecMimeType.RED}`);
+                            && caps.mimeType.toLowerCase() !== `${MediaType.VIDEO}/${CodecMimeType.RED}`);
                 }
 
                 // Apply codec preference to all the transceivers associated with the given media type.
@@ -1410,7 +1410,7 @@ export default class TraceablePeerConnection {
             return remoteTracks;
         }
 
-        const endpoints = endpointId ? [ endpointId ] : this.remoteTracks.keys();
+        const endpoints = endpointId ? [endpointId] : this.remoteTracks.keys();
 
         for (const endpoint of endpoints) {
             const endpointTracksByMediaType = this.remoteTracks.get(endpoint);
@@ -1453,7 +1453,7 @@ export default class TraceablePeerConnection {
         }
         const primarySsrcs = remoteTracks.map(track => track.getSsrc());
 
-        for (const [ sourceName, sourceInfo ] of this._remoteSsrcMap) {
+        for (const [sourceName, sourceInfo] of this._remoteSsrcMap) {
             if (sourceInfo.ssrcList?.some(ssrc => primarySsrcs.includes(Number(ssrc)))) {
                 removeSsrcInfo.set(sourceName, sourceInfo);
             }
@@ -1578,7 +1578,7 @@ export default class TraceablePeerConnection {
         if (!mediaLine) {
             logger.error(
                 `Matching media line not found in remote SDP for remote stream[id=${streamId},type=${mediaType}],`
-                    + 'track creation failed!');
+                + 'track creation failed!');
 
             return;
         }
@@ -1588,7 +1588,7 @@ export default class TraceablePeerConnection {
         ssrcLines = ssrcLines.filter(line => line.indexOf(`msid:${streamId}`) !== -1);
         if (!ssrcLines.length) {
             logger.error(`No SSRC lines found in remote SDP for remote stream[msid=${streamId},type=${mediaType}]`
-                    + 'track creation failed!');
+                + 'track creation failed!');
 
             return;
         }
@@ -1601,7 +1601,7 @@ export default class TraceablePeerConnection {
 
         if (!isValidNumber(trackSsrc) || trackSsrc < 0) {
             logger.error(`Invalid SSRC for remote stream[ssrc=${trackSsrc},id=${streamId},type=${mediaType}]`
-                    + 'track creation failed!');
+                + 'track creation failed!');
 
             return;
         }
@@ -1684,17 +1684,17 @@ export default class TraceablePeerConnection {
 
         const remoteTrack
             = new JitsiRemoteTrack(
-                    this.rtc,
-                    this.rtc.conference,
-                    ownerEndpointId,
-                    stream,
-                    track,
-                    mediaType,
-                    videoType,
-                    ssrc,
-                    muted,
-                    this.isP2P,
-                    sourceName);
+                this.rtc,
+                this.rtc.conference,
+                ownerEndpointId,
+                stream,
+                track,
+                mediaType,
+                videoType,
+                ssrc,
+                muted,
+                this.isP2P,
+                sourceName);
 
         if (FeatureFlags.isSsrcRewritingSupported()) {
             this.remoteTracksBySsrc.set(ssrc, remoteTrack);
@@ -2215,7 +2215,7 @@ export default class TraceablePeerConnection {
             return;
         }
 
-        [ MediaType.AUDIO, MediaType.VIDEO ].forEach(mediaType => {
+        [MediaType.AUDIO, MediaType.VIDEO].forEach(mediaType => {
             const tracks = localTracks.filter(t => t.getType() === mediaType);
             const parsedSdp = transform.parse(localSdp);
             const mLines = parsedSdp.media.filter(mline => mline.type === mediaType);
@@ -2262,21 +2262,21 @@ export default class TraceablePeerConnection {
         if (oldTrack && !oldTrack.isMuted()) {
             transceiver = this.peerconnection.getTransceivers().find(t => t.sender.track === oldTrack.getTrack());
 
-        // Find the first recvonly transceiver when more than one track of the same media type is being added to the pc.
-        // As part of the track addition, a new m-line was added to the remote description with direction set to
-        // recvonly.
+            // Find the first recvonly transceiver when more than one track of the same media type is being added to the pc.
+            // As part of the track addition, a new m-line was added to the remote description with direction set to
+            // recvonly.
         } else if (isNewLocalSource) {
             transceiver = this.peerconnection.getTransceivers().find(
                 t => t.receiver.track.kind === mediaType
-                && t.direction === MediaDirection.RECVONLY
+                    && t.direction === MediaDirection.RECVONLY
 
-                // Re-use any existing recvonly transceiver (if available) for p2p case.
-                && ((this.isP2P && t.currentDirection === MediaDirection.RECVONLY)
-                // @ts-ignore
-                    || (t.currentDirection === MediaDirection.INACTIVE && !t.stopped)));
+                    // Re-use any existing recvonly transceiver (if available) for p2p case.
+                    && ((this.isP2P && t.currentDirection === MediaDirection.RECVONLY)
+                        // @ts-ignore
+                        || (t.currentDirection === MediaDirection.INACTIVE && !t.stopped)));
 
-        // For mute/unmute operations, find the transceiver based on the track index in the source name if present,
-        // otherwise it is assumed to be the first local track that was added to the peerconnection.
+            // For mute/unmute operations, find the transceiver based on the track index in the source name if present,
+            // otherwise it is assumed to be the first local track that was added to the peerconnection.
         } else {
             transceiver = this.peerconnection.getTransceivers().find(t => t.receiver.track.kind === mediaType);
             const sourceName = newTrack?.getSourceName() ?? oldTrack?.getSourceName();
@@ -2293,8 +2293,8 @@ export default class TraceablePeerConnection {
                     transceiver = this.peerconnection.getTransceivers().find(t => t.mid === transceiverMid);
                 } else if (trackIndex) {
                     transceiver = this.peerconnection.getTransceivers()
-                            .filter(t => t.receiver.track.kind === mediaType
-                                && t.direction !== MediaDirection.RECVONLY)[trackIndex];
+                        .filter(t => t.receiver.track.kind === mediaType
+                            && t.direction !== MediaDirection.RECVONLY)[trackIndex];
                 }
             }
         }
@@ -2404,7 +2404,7 @@ export default class TraceablePeerConnection {
      * @returns {void}
      */
     updateRemoteSources(sourceMap: Map<string, ITPCSourceInfo>, isAdd: boolean): void {
-        for (const [ sourceName, ssrcInfo ] of sourceMap) {
+        for (const [sourceName, ssrcInfo] of sourceMap) {
             if (isAdd) {
                 this._remoteSsrcMap.set(sourceName, ssrcInfo);
             } else {
@@ -2503,7 +2503,7 @@ export default class TraceablePeerConnection {
 
         if (localVideoTrack) {
             const height = this._senderMaxHeights.get(localVideoTrack.getSourceName())
-            ?? VIDEO_QUALITY_LEVELS[0].height;
+                ?? VIDEO_QUALITY_LEVELS[0].height;
 
             return this.setSenderVideoConstraints(height, localVideoTrack, preferredCodec);
         }
@@ -2568,7 +2568,7 @@ export default class TraceablePeerConnection {
         remoteDescription = this.tpcUtils.ensureCorrectOrderOfSsrcs(remoteDescription);
         this.trace(
             'setRemoteDescription::postTransform (correct ssrc order)',
-             TraceablePeerConnection.dumpSDP(remoteDescription));
+            TraceablePeerConnection.dumpSDP(remoteDescription));
 
         remoteDescription = this._mungeDescription(remoteDescription);
 

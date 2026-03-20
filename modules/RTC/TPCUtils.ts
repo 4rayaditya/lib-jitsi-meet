@@ -299,12 +299,27 @@ export class TPCUtils {
 
         // 2. Map bitrate tiers based on scale factor
         const bitrateForLayer = (layer: { scaleFactor: number }): number => {
+            if (videoType === VideoType.DESKTOP) {
+                const minScaleFactor = Math.min(...effectiveLayers.map(l => l.scaleFactor));
+        
+                if (layer.scaleFactor === minScaleFactor) {
+                    return codecBitrates.ssHigh;
+                }
+                if (layer.scaleFactor === 4.0) {
+                    return codecBitrates.low;
+                }
+        
+                return codecBitrates.standard;
+            }
+        
+            // Camera
             if (layer.scaleFactor === 1.0) {
-                return videoType === VideoType.DESKTOP ? codecBitrates.ssHigh : codecBitrates.high;
+                return codecBitrates.high;
             }
             if (layer.scaleFactor === 4.0) {
                 return codecBitrates.low;
             }
+        
             return codecBitrates.standard;
         };
 

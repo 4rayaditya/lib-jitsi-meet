@@ -139,7 +139,7 @@ describe('sdp-simulcast', () => {
             it('should do nothing if the mline has no ssrcs in the local sdp', () => {
                 const sdp = SampleSdpStrings.plainVideoSdp;
                 const videoMLine = sdp.media.find(m => m.type === MediaType.VIDEO);
-                if(videoMLine) {
+                if (videoMLine) {
                     videoMLine.ssrcs = [];
                 }
                 const desc = {

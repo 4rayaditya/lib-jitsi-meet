@@ -152,7 +152,7 @@ export default class SdpSimulcast {
     _getSsrcAttribute(mLine: transform.MediaDescription, ssrc: number, attributeName: string): Optional<string> {
         return mLine.ssrcs?.find(
             ssrcInfo => Number(ssrcInfo.id) === ssrc
-            && ssrcInfo.attribute === attributeName)?.value;
+                && ssrcInfo.attribute === attributeName)?.value;
     }
 
     /**
@@ -169,7 +169,7 @@ export default class SdpSimulcast {
         }
 
         if (mLine.ssrcs?.length) {
-            return [ Number(mLine.ssrcs[0].id) ];
+            return [Number(mLine.ssrcs[0].id)];
         }
 
         return null;
@@ -225,7 +225,7 @@ export default class SdpSimulcast {
 
             // Determine number of layers dynamically based on capture resolution
             const captureHeight = trackResolutionMap?.get(mid);
-            const effectiveLayers = captureHeight 
+            const effectiveLayers = captureHeight
                 ? getEffectiveSimulcastLayers(captureHeight)
                 : getEffectiveSimulcastLayers(720); // Default to 3 layers if resolution unknown
             const numLayers = effectiveLayers.length;

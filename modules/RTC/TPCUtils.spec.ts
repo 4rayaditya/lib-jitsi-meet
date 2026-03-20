@@ -1612,10 +1612,10 @@ describe('TPCUtils', () => {
                 height = 240;
                 const lowResolutionTrack = new MockJitsiLocalTrack(320, MediaType.VIDEO, VideoType.CAMERA);
 
-                // 320p < 360p threshold, so only 1 layer is returned
+                // 320p < 360p threshold, so only 1 layer is returned at native capture resolution
                 scaleFactor = tpcUtils.calculateEncodingsScaleFactor(lowResolutionTrack, codec, height);
                 expect(scaleFactor.length).toBe(1);
-                expect(scaleFactor[0]).toBe(SIM_LAYERS[0].scaleFactor); // Only low layer (4x)
+                expect(scaleFactor[0]).toBe(1.0); // single layer = native resolution, not 4x downscale
             });
 
             it('and capture resolution is 480 (low resolution - 2 layers)', () => {
