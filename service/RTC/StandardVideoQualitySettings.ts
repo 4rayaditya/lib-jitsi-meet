@@ -193,3 +193,22 @@ export enum VIDEO_QUALITY_SETTINGS {
     // 3840x2160 or 4k.
     ULTRA = 'ultraHd'
 }
+
+/**
+ * Validates the number of simulcast layers needed based on the capture resolution.
+ *
+ * @param {number} captureHeight - The height of the captured video in pixels.
+ * @returns {number} The number of simulcast layers to configure.
+ */
+export function getSimulcastLayerCount(captureHeight: number, videoType?: string): number {
+    if (videoType && videoType === 'desktop') {
+        return 3;
+    }
+    if (captureHeight < 360) {
+        return 1;
+    }
+    if (captureHeight < 720) {
+        return 2;
+    }
+    return 3;
+}

@@ -2,7 +2,7 @@ import * as transform from 'sdp-transform';
 
 import { MediaDirection } from '../../service/RTC/MediaDirection';
 import { MediaType } from '../../service/RTC/MediaType';
-import { SIM_LAYERS, SSRC_GROUP_SEMANTICS } from '../../service/RTC/StandardVideoQualitySettings';
+import { SIM_LAYERS, SSRC_GROUP_SEMANTICS, getSimulcastLayerCount } from '../../service/RTC/StandardVideoQualitySettings';
 
 /**
  * This class handles SDP munging for enabling simulcast for local video streams in Unified plan. A set of random SSRCs
@@ -55,10 +55,12 @@ export default class SdpSimulcast {
             });
         }
 
-        mLine.ssrcGroups.push({
-            semantics: SSRC_GROUP_SEMANTICS.SIM,
-            ssrcs: cachedSsrcs.join(' ')
-        });
+        if (cachedSsrcs.length > 1) {
+            mLine.ssrcGroups.push({
+                semantics: SSRC_GROUP_SEMANTICS.SIM,
+                ssrcs: cachedSsrcs.join(' ')
+            });
+        }
 
         return mLine;
     }
@@ -71,7 +73,7 @@ export default class SdpSimulcast {
      * @param primarySsrc
      * @returns
      */
-    _generateNewSsrcsForSimulcast(mLine: transform.MediaDescription, primarySsrc: number): any {
+    _generateNewSsrcsForSimulcast(mLine: transform.MediaDescription, primarySsrc: number, numLayers: number): any {
         const cname = this._getSsrcAttribute(mLine, primarySsrc, 'cname');
         let msid = this._getSsrcAttribute(mLine, primarySsrc, 'msid');
 
@@ -94,7 +96,7 @@ export default class SdpSimulcast {
         // Generate SIM layers.
         const simSsrcs = [];
 
-        for (let i = 0; i < this._numOfLayers - 1; ++i) {
+        for (let i = 0; i < numLayers - 1; ++i) {
             const simSsrc = this._generateSsrc();
 
             mLine.ssrcs.push({
@@ -111,11 +113,13 @@ export default class SdpSimulcast {
             simSsrcs.push(simSsrc);
         }
 
-        mLine.ssrcGroups = mLine.ssrcGroups || [];
-        mLine.ssrcGroups.push({
-            semantics: SSRC_GROUP_SEMANTICS.SIM,
-            ssrcs: `${primarySsrc} ${simSsrcs.join(' ')}`
-        });
+        if (numLayers > 1) {
+            mLine.ssrcGroups = mLine.ssrcGroups || [];
+            mLine.ssrcGroups.push({
+                semantics: SSRC_GROUP_SEMANTICS.SIM,
+                ssrcs: `${primarySsrc} ${simSsrcs.join(' ')}`
+            });
+        }
 
         return mLine;
     }
@@ -174,10 +178,15 @@ export default class SdpSimulcast {
      * @param description
      * @returns
      */
-    mungeLocalDescription(description: RTCSessionDescription): RTCSessionDescription {
+    mungeLocalDescription(description: RTCSessionDescription, captureHeight?: number, videoType?: string): RTCSessionDescription {
         if (!description?.sdp) {
             return description;
         }
+
+        const numLayers = captureHeight !== undefined
+            ? getSimulcastLayerCount(captureHeight, videoType)
+            : this._numOfLayers;
+
         const session = transform.parse(description.sdp);
 
         for (let media of session.media) {
@@ -212,7 +221,7 @@ export default class SdpSimulcast {
             if (this._ssrcCache.has(mid)) {
                 media = this._fillSsrcsFromCache(media);
             } else {
-                media = this._generateNewSsrcsForSimulcast(media, primarySsrc);
+                media = this._generateNewSsrcsForSimulcast(media, primarySsrc, numLayers);
                 const simulcastSsrcs = this._parseSimLayers(media);
 
                 // Update the SSRCs in the cache so that they can re-used for the same mid again.

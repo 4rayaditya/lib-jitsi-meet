@@ -58,6 +58,54 @@ describe('sdp-simulcast', () => {
             expect(simGroup.ssrcs.split(' ').length).toEqual(numLayers);
         });
 
+        it('should add simulcast layers when captureResolution is 720p', () => {
+            const sdp = SampleSdpStrings.plainVideoSdp;
+            const desc = {
+                type: 'answer',
+                sdp: transform.write(sdp)
+            };
+
+            const newDesc = simulcast.mungeLocalDescription(desc, 720);
+            const newSdp = transform.parse(newDesc.sdp);
+
+            expect(numVideoSsrcs(newSdp)).toEqual(numLayers);
+            const simGroup = getVideoGroups(newSdp, 'SIM')[0];
+
+            expect(simGroup.ssrcs.split(' ').length).toEqual(numLayers);
+        });
+
+        it('should add 2 simulcast layers when captureResolution is 480', () => {
+            const sdp = SampleSdpStrings.plainVideoSdp;
+            const desc = {
+                type: 'answer',
+                sdp: transform.write(sdp)
+            };
+
+            const newDesc = simulcast.mungeLocalDescription(desc, 480);
+            const newSdp = transform.parse(newDesc.sdp);
+
+            expect(numVideoSsrcs(newSdp)).toEqual(2);
+            const simGroup = getVideoGroups(newSdp, 'SIM')[0];
+
+            expect(simGroup.ssrcs.split(' ').length).toEqual(2);
+        });
+
+        it('should add 1 simulcast layer when captureResolution is 320', () => {
+            const sdp = SampleSdpStrings.plainVideoSdp;
+            const desc = {
+                type: 'answer',
+                sdp: transform.write(sdp)
+            };
+
+            const newDesc = simulcast.mungeLocalDescription(desc, 320);
+            const newSdp = transform.parse(newDesc.sdp);
+
+            expect(numVideoSsrcs(newSdp)).toEqual(1);
+            const simGroup = getVideoGroups(newSdp, 'SIM');
+
+            expect(simGroup.length).toEqual(0);
+        });
+
         it('should add the cached SSRCs on subsequent sLD calls to the local sdp', () => {
             const sdp = SampleSdpStrings.plainVideoSdp;
             const desc = {
@@ -80,7 +128,7 @@ describe('sdp-simulcast', () => {
             it('should do nothing if the mline has no ssrcs in the local sdp', () => {
                 const sdp = SampleSdpStrings.plainVideoSdp;
                 const videoMLine = sdp.media.find(m => m.type === MediaType.VIDEO);
-                if(videoMLine) {
+                if (videoMLine) {
                     videoMLine.ssrcs = [];
                 }
                 const desc = {

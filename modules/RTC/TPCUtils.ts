@@ -10,7 +10,8 @@ import {
     SSRC_GROUP_SEMANTICS,
     STANDARD_CODEC_SETTINGS,
     VIDEO_QUALITY_LEVELS,
-    VIDEO_QUALITY_SETTINGS
+    VIDEO_QUALITY_SETTINGS,
+    getSimulcastLayerCount
 } from '../../service/RTC/StandardVideoQualitySettings';
 import { VideoEncoderScalabilityMode } from '../../service/RTC/VideoEncoderScalabilityMode';
 import { VideoType } from '../../service/RTC/VideoType';
@@ -245,26 +246,19 @@ export class TPCUtils {
             effectiveScaleFactors = effectiveScaleFactors.reverse();
         }
 
-        const standardSimulcastEncodings: IRTCRtpEncodingParameters[] = [
-            {
-                active: this.pc.videoTransferActive,
-                maxBitrate: effectiveBitrates[0],
-                rid: SIM_LAYERS[0].rid,
-                scaleResolutionDownBy: effectiveScaleFactors[0]
-            },
-            {
-                active: this.pc.videoTransferActive,
-                maxBitrate: effectiveBitrates[1],
-                rid: SIM_LAYERS[1].rid,
-                scaleResolutionDownBy: effectiveScaleFactors[1]
-            },
-            {
-                active: this.pc.videoTransferActive,
-                maxBitrate: effectiveBitrates[2],
-                rid: SIM_LAYERS[2].rid,
-                scaleResolutionDownBy: effectiveScaleFactors[2]
-            }
-        ];
+        const numLayers = getSimulcastLayerCount(captureResolution, videoType);
+        // For 1 layer: use the LAST SIM_LAYERS entry (scaleFactor 1.0 = native resolution)
+        // For 2+ layers: use the FIRST numLayers entries from SIM_LAYERS
+        const activeLayers = numLayers === 1
+            ? SIM_LAYERS.slice(SIM_LAYERS.length - 1)
+            : SIM_LAYERS.slice(0, numLayers);
+
+        const standardSimulcastEncodings = activeLayers.map((layer, idx) => ({
+            active: this.pc.videoTransferActive,
+            maxBitrate: effectiveBitrates[SIM_LAYERS.indexOf(layer)],
+            rid: layer.rid,
+            scaleResolutionDownBy: effectiveScaleFactors[SIM_LAYERS.indexOf(layer)]
+        }));
 
         if (this.codecSettings[codec].scalabilityModeEnabled) {
             // Configure all 3 encodings when simulcast is requested through config.js for AV1 and VP9 and for H.264

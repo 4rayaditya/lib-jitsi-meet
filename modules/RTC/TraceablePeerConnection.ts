@@ -1073,8 +1073,11 @@ export default class TraceablePeerConnection {
 
                 // Munge local description to add 3 SSRCs for video tracks when spatial scalability is enabled.
                 if (this.isSpatialScalabilityOn() && browser.usesSdpMungingForSimulcast()) {
+                    const localVideoTrack = this.getLocalVideoTracks()[0];
+                    const captureHeight = localVideoTrack?.getCaptureResolution();
+                    const videoType = localVideoTrack?.getVideoType();
                     // eslint-disable-next-line no-param-reassign
-                    resultSdp = this.simulcast.mungeLocalDescription(resultSdp);
+                    resultSdp = this.simulcast.mungeLocalDescription(resultSdp, captureHeight, videoType);
                     this.trace(`create${logName} OnSuccess::postTransform (simulcast)`,
                          TraceablePeerConnection.dumpSDP(resultSdp));
                 }

@@ -1589,6 +1589,41 @@ describe('TPCUtils', () => {
                 expect(scaleFactor[1]).toBe(6);
                 expect(scaleFactor[2]).toBe(SIM_LAYERS[2].scaleFactor);
             });
+
+            it('and capture resolution is 320 (low resolution - 1 layer only)', () => {
+                const lowResTrack = new MockJitsiLocalTrack(320, MediaType.VIDEO, VideoType.CAMERA);
+                height = 320;
+                activeState = tpcUtils.calculateEncodingsActiveState(lowResTrack, codec, height);
+                expect(activeState.length).toBe(1);
+                expect(activeState[0]).toBe(true);
+
+                maxBitrates = tpcUtils.calculateEncodingsBitrates(lowResTrack, codec, height);
+                expect(maxBitrates.length).toBe(1);
+                expect(maxBitrates[0]).toBe(200000);
+
+                scaleFactor = tpcUtils.calculateEncodingsScaleFactor(lowResTrack, codec, height);
+                expect(scaleFactor.length).toBe(1);
+                expect(scaleFactor[0]).toBe(1.0);
+            });
+
+            it('and capture resolution is 480 (standard resolution - 2 layers)', () => {
+                const stdResTrack = new MockJitsiLocalTrack(480, MediaType.VIDEO, VideoType.CAMERA);
+                height = 480;
+                activeState = tpcUtils.calculateEncodingsActiveState(stdResTrack, codec, height);
+                expect(activeState.length).toBe(2);
+                expect(activeState[0]).toBe(true);
+                expect(activeState[1]).toBe(true);
+
+                maxBitrates = tpcUtils.calculateEncodingsBitrates(stdResTrack, codec, height);
+                expect(maxBitrates.length).toBe(2);
+                expect(maxBitrates[0]).toBe(200000);
+                expect(maxBitrates[1]).toBe(500000);
+
+                scaleFactor = tpcUtils.calculateEncodingsScaleFactor(stdResTrack, codec, height);
+                expect(scaleFactor.length).toBe(2);
+                expect(scaleFactor[0]).toBe(SIM_LAYERS[0].scaleFactor);
+                expect(scaleFactor[1]).toBe(SIM_LAYERS[1].scaleFactor);
+            });
         });
 
         describe('VP8 low fps desktop tracks', () => {
